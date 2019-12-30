@@ -64,7 +64,6 @@ public class PixerEndpoint {
 		
 		for (FillMsg msg : cache) {
 			OutboundSseEvent fillEvent = eventBuilder
-				.name("fill")
 				.mediaType(MediaType.APPLICATION_JSON_TYPE)
 				.data(FillMsg.class, msg)
 				.reconnectDelay(4000)
