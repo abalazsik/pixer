@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Pixer</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+    .pixel {
+        width: 20px;
+        height: 20px;
+        border: 1px solid black;
+        margin: 0px;
+        padding: 0px;
+        display: inline;
+    }
+    .pixel-row {
+        display: flex;
+    }
+</style>
+    </head>
+    <body>
+        <div>
+            <div id="pixer"></div>
+            <label for="color-chooser">Color:</label>
+            <input id="color-chooser" type="color" onchange="chooseColor()" value="#0000ff"/>
+        </div>
+<script>
+
+var selectedColor = '#0000ff';
+
+function start() {
+    window.fetch(encodeURI('/pixer/config', { method: "get" }))
+        .then(function (response){
+            if (response.ok) {
+                response.json().then(function(config) {
+                    initPixer(config);
+                    connect();
+                });
+            }
+        });
+}
+
+function connect() {
+    var eventSource = new EventSource("/pixer/connect");
+    eventSource.onmessage = eventSource.onconnect = function(event) {
+        var obj = JSON.parse(event.data);
+        var id = getId(obj.x, obj.y);
+        var pixel = document.getElementById(id);
+        pixel.style.backgroundColor = obj.color;
+    };
+}
+
+function initPixer(config) {
+    var pixer = document.getElementById('pixer');
+    
+    for (let y = 0; y < config.height; y++) {
+        var div = document.createElement("div");
+        div.className = 'pixel-row';
+        for (let x = 0; x < config.width; x++) {
+            var pixel = document.createElement("div");
+            pixel.id = getId(x,y);
+            pixel.className = 'pixel';
+            let px = x;
+            let py = y;
+            pixel.onclick = function () {
+                fillPixel(px, py);
+            };
+            div.appendChild(pixel);
+        }
+        pixer.appendChild(div);
+    }
+}
+
+function fillPixel(x, y) {
+    var msg = {x: x, y: y, color: selectedColor};
+    window.fetch(encodeURI('/pixer/fill'),
+        {
+            method: "post" ,
+            body: JSON.stringify(msg),
+            headers: {
+            'Content-Type': 'application/json'
+            }
+        }).then(function(){
+        
+    });
+}
+
+function getId(x,y) {
+    return 'p' + x + '_' + y;
+}
+
+function chooseColor() {
+    var pixer = document.getElementById('color-chooser');
+    
+    selectedColor = pixer.value;
+}
+
+start();
+
+</script>
+    </body>
+</html>
